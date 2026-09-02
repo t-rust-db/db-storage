@@ -90,7 +90,11 @@ mod tests {
 
     fn tempfile_with_contents(contents: &[u8]) -> TempFile {
         let mut path = std::env::temp_dir();
-        let unique = format!("db-storage-test-{}-{}.tmp", std::process::id(), fastrand_like());
+        let unique = format!(
+            "db-storage-test-{}-{}.tmp",
+            std::process::id(),
+            fastrand_like()
+        );
         path.push(unique);
         let mut file = std::fs::File::create(&path).unwrap();
         file.write_all(contents).unwrap();
@@ -102,7 +106,10 @@ mod tests {
     /// the same temp file name (no external RNG dependency).
     fn fastrand_like() -> u64 {
         use std::time::{SystemTime, UNIX_EPOCH};
-        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos();
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .subsec_nanos();
         let addr = &nanos as *const _ as u64;
         (nanos as u64).wrapping_mul(2654435761).wrapping_add(addr)
     }

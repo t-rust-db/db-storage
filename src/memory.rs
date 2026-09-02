@@ -22,7 +22,10 @@ impl MemoryVfs {
 
     /// Add or replace the contents of a virtual file.
     pub fn insert(&self, path: impl Into<PathBuf>, contents: impl Into<Vec<u8>>) {
-        self.files.lock().unwrap().insert(path.into(), contents.into().into());
+        self.files
+            .lock()
+            .unwrap()
+            .insert(path.into(), contents.into().into());
     }
 }
 
