@@ -1,0 +1,11 @@
+[package]
+name = "db-storage"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "db_storage"
+path = "src/lib.rs"
+
+[dependencies]
+memmap2 = "0.9.11"
