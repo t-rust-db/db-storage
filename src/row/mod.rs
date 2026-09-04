@@ -20,7 +20,10 @@
 #![deny(clippy::arithmetic_side_effects)]
 
 pub mod btree;
+pub mod format;
 pub mod header;
+pub mod integrity;
 pub mod pager;
 pub mod record;
+pub mod schema;
 pub mod vfs;
