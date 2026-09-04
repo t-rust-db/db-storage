@@ -19,6 +19,7 @@
 #![deny(clippy::panic)]
 #![deny(clippy::arithmetic_side_effects)]
 
+pub mod btree;
 pub mod header;
 pub mod pager;
 pub mod record;
