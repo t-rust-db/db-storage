@@ -1,21 +1,22 @@
-//! `db-storage`: a small VFS abstraction (`Vfs` / `VfsFile`) shared across
-//! the t-rust-db engines, so storage backends can be swapped without
-//! touching engine code — a real filesystem in production, an in-memory
-//! VFS in tests, and later something like S3.
+//! `db-storage`: all physical storage for t-rust-db, structured as one
+//! feature-gated module per execution mode (`row`/`column`/`stream`,
+//! see `db-core`'s ADR 0006) — today, only `column` is real.
 //!
-//! `src/mmap.rs` is the only place in this crate that uses `unsafe`; it
-//! is required by `memmap2`'s `Mmap::map` contract and cannot be avoided
-//! without hand-rolling a cross-platform mmap wrapper. Everything else in
-//! this crate is safe code.
+//! `column` is the mmap-based `Vfs`/`VfsFile` pair plus the Parquet
+//! reader that consumes it (folded in from the standalone `db-parquet`
+//! repo, `#4`). `src/column/mmap.rs` is the only place in this crate
+//! that uses `unsafe`; it is required by `memmap2`'s `Mmap::map`
+//! contract and cannot be avoided without hand-rolling a cross-platform
+//! mmap wrapper. Everything else in this crate is safe code.
 
-pub mod memory;
-pub mod mmap;
-pub mod posix;
-pub mod vfs;
+#[cfg(feature = "column")]
+pub mod column;
 
-pub use memory::MemoryVfs;
-pub use posix::PosixVfs;
-pub use vfs::{MmapRegion, Vfs, VfsFile};
+#[cfg(feature = "column")]
+pub use column::{
+    DictionaryIndices, FileError, MemoryVfs, MmapRegion, ParquetFile, PosixVfs, RowGroupReader,
+    Vfs, VfsFile,
+};
 
 #[cfg(test)]
 mod tests {

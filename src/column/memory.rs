@@ -6,7 +6,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use crate::vfs::{MmapRegion, Vfs, VfsFile};
+use crate::column::vfs::{MmapRegion, Vfs, VfsFile};
 
 /// A `Vfs` backed by an in-memory map of path -> bytes. Populate it with
 /// [`MemoryVfs::insert`] before opening files.

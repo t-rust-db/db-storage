@@ -5,8 +5,8 @@ use std::io::{self, Read, Seek, SeekFrom};
 use std::path::Path;
 use std::sync::Mutex;
 
-use crate::mmap;
-use crate::vfs::{MmapRegion, Vfs, VfsFile};
+use crate::column::mmap;
+use crate::column::vfs::{MmapRegion, Vfs, VfsFile};
 
 /// Opens files from the local filesystem.
 #[derive(Default)]

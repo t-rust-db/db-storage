@@ -1,4 +1,4 @@
-//! Memory-mapping helper used by [`crate::posix::PosixFile`]. `memmap2` is
+//! Memory-mapping helper used by [`crate::column::posix::PosixFile`]. `memmap2` is
 //! the one external dependency in this crate — hand-rolling a
 //! cross-platform (Unix + Windows) mmap wrapper is not worth the risk of
 //! getting page-fault/lifetime edge cases wrong.
@@ -10,7 +10,7 @@
 use std::fs::File;
 use std::io;
 
-use crate::vfs::MmapRegion;
+use crate::column::vfs::MmapRegion;
 
 /// Memory-map a file for read-only access.
 pub fn map_file(file: &File) -> io::Result<MmapRegion> {
