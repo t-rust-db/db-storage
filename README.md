@@ -67,14 +67,18 @@ let file = vfs.open(std::path::Path::new("data.parquet"))?;
 
 ## `row`
 
-sqlite-rs's storage stack, migrated in from `db-core` unchanged in shape
-(`db-core#39`): `row::vfs` (locking, WAL/`-shm` access, with `sql-sys`'s
-`fcntl` folded in as a private submodule — its only consumer), `row::pager`
-(page cache, WAL, rollback journal, freelist), `row::header` (database
-header parsing), `row::record` (varint/serial-type/record decoding).
-Feature-gated behind `row` (off by default, same pattern as `column`).
-`sql-btree`/`sql-schema` (epic [`#1`](https://github.com/t-rust-db/db-storage/issues/1),
-was `db-core#16`/`#17`) land here next, directly, not in `db-core`.
+sqlite-rs's storage stack, migrated in unchanged in shape (`db-core#39`,
+`#16`, `#17`; epic [`#1`](https://github.com/t-rust-db/db-storage/issues/1)):
+`row::vfs` (locking, WAL/`-shm` access, with `sql-sys`'s `fcntl` folded
+in as a private submodule — its only consumer), `row::pager` (page
+cache, WAL, rollback journal, freelist), `row::header` (database header
+parsing), `row::record` (varint/serial-type/record decoding),
+`row::btree` (table/index b-tree read+write paths, `sqlite_master`
+write helpers), `row::schema` (DDL reader), `row::integrity`
+(`PRAGMA integrity_check`/`quick_check`), `row::format` (shell-parity
+value rendering — an independent sibling, not schema-coupled; checked
+before merging it in). Feature-gated behind `row` (off by default,
+same pattern as `column`).
 
 ## `stream` (not yet started)
 
