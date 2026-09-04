@@ -14,21 +14,25 @@ help: ## Show this help
 
 # === Build ===
 
-build: ## Build the crate
-	cargo build
+build: ## Build the crate (all features)
+	cargo build --all-features
 
 # === Test ===
 
-test: ## Run the full test suite
-	cargo test
+test: ## Run the full test suite (all features)
+	@# Build lock_probe helper binary first -- cargo test doesn't build [[bin]]
+	@# targets automatically, and row::pager's tests need it too, not just
+	@# row::vfs's own (migrated from db-core's Makefile, db-core#39).
+	cargo build --features row --bin lock_probe
+	cargo test --all-features
 
-test-lib: ## Just the library unit tests (fastest inner loop)
-	cargo test --lib
+test-lib: ## Just the library unit tests, all features (fastest inner loop)
+	cargo test --all-features --lib
 
 # === Gates ===
 
-lint: ## Run clippy (deny warnings) and check formatting
-	cargo clippy --all-targets -- -D warnings
+lint: ## Run clippy (deny warnings) and check formatting, all features
+	cargo clippy --all-features --all-targets -- -D warnings
 	cargo fmt -- --check
 
 # === Release ===

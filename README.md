@@ -19,12 +19,13 @@ two separately-versioned ones.
 concrete file type, so tests can run against fake storage without
 touching disk.
 
-**Note:** sqlite-rs's own VFS (`sql-vfs`, migrating from `db-core` into
-this repo's `row` module per ADR 0006) is a **separate trait**, not this
-one — see `db-core`'s ADR 0003 for why (mmap-safety vs. pread-only under
+**Note:** sqlite-rs's own VFS (`row::vfs`, migrated from `db-core` per
+ADR 0006, `db-core#39`) is a **separate trait**, not this one — see
+`db-core`'s ADR 0003 for why (mmap-safety vs. pread-only under
 concurrent mutation, and `#![forbid(unsafe_code)]` vs. this crate's one
 documented `unsafe`). Don't assume `column`'s `Vfs` is "the" storage
-trait once `row` lands.
+trait — `row::vfs::Vfs` is a distinct, non-`pub use`d trait at
+`db_storage::row::vfs::Vfs`.
 
 ### What's here
 
@@ -64,12 +65,16 @@ vfs.insert("data.parquet", some_bytes);
 let file = vfs.open(std::path::Path::new("data.parquet"))?;
 ```
 
-## `row` (not yet migrated)
+## `row`
 
-sqlite-rs's storage stack (`sql-vfs`, `sql-pager`, `sql-header`,
-`sql-record`, plus new `sql-btree`/`sql-schema`) — tracked in
-[`#1`](https://github.com/t-rust-db/db-storage/issues/1), migration
-tracked in `db-core#39`.
+sqlite-rs's storage stack, migrated in from `db-core` unchanged in shape
+(`db-core#39`): `row::vfs` (locking, WAL/`-shm` access, with `sql-sys`'s
+`fcntl` folded in as a private submodule — its only consumer), `row::pager`
+(page cache, WAL, rollback journal, freelist), `row::header` (database
+header parsing), `row::record` (varint/serial-type/record decoding).
+Feature-gated behind `row` (off by default, same pattern as `column`).
+`sql-btree`/`sql-schema` (epic [`#1`](https://github.com/t-rust-db/db-storage/issues/1),
+was `db-core#16`/`#17`) land here next, directly, not in `db-core`.
 
 ## `stream` (not yet started)
 
