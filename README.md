@@ -1,39 +1,57 @@
 # db-storage
 
-A small `Vfs` / `VfsFile` abstraction shared across the t-rust-db engines
-(sqlite-rs, column-rs, loglume). Engines open and read files through these
-traits instead of `std::fs` directly, so the actual storage backend can be
-swapped without touching engine code.
+All physical storage for t-rust-db, structured as one feature-gated
+module per execution mode (`row`/`column`/`stream` — see `db-core`'s
+[ADR 0006](https://github.com/t-rust-db/db-core/blob/main/.openspec/adr/0006-storage-consolidation-into-db-storage.md)).
+Today, only `column` is real.
 
-## Why
+## `column`
+
+A `Vfs`/`VfsFile` abstraction (mmap-based, read-only) plus the Parquet
+reader that consumes it — folded together from the standalone
+`db-parquet` repo (`#4`) so `column-rs` depends on one crate instead of
+two separately-versioned ones.
+
+### Why a `Vfs` trait
 
 `column-rs` originally had its own private `mmap.rs` wrapping `memmap2`.
-That's fine for one engine, but sqlite-rs needs the same "map a file
-read-only, or read it at an offset" capability, and both engines need a
-way to test against fake storage without touching disk. `db-storage`
-pulls that into a shared crate and adds the seam a real VFS needs: a
-trait, not a concrete file type.
+`db-storage` pulls that into a shared, swappable seam: a trait, not a
+concrete file type, so tests can run against fake storage without
+touching disk.
 
-## What's here
+**Note:** sqlite-rs's own VFS (`sql-vfs`, migrating from `db-core` into
+this repo's `row` module per ADR 0006) is a **separate trait**, not this
+one — see `db-core`'s ADR 0003 for why (mmap-safety vs. pread-only under
+concurrent mutation, and `#![forbid(unsafe_code)]` vs. this crate's one
+documented `unsafe`). Don't assume `column`'s `Vfs` is "the" storage
+trait once `row` lands.
 
-- `vfs.rs` — the `Vfs` and `VfsFile` traits, plus `MmapRegion`, a
+### What's here
+
+- `column/vfs.rs` — the `Vfs` and `VfsFile` traits, plus `MmapRegion`, a
   read-only byte view that's either an OS mmap or an owned in-memory
   buffer.
-- `posix.rs` — `PosixVfs` / `PosixFile`, backed by `std::fs::File`.
-- `mmap.rs` — the `memmap2` call, isolated to one function. This is the
-  only place in the crate using `unsafe` (required by `memmap2`'s
-  `Mmap::map` contract).
-- `memory.rs` — `MemoryVfs` / `MemoryFile`, an in-memory backend for
-  tests: no filesystem involved, so callers can seed exact byte layouts.
+- `column/posix.rs` — `PosixVfs` / `PosixFile`, backed by `std::fs::File`.
+- `column/mmap.rs` — the `memmap2` call, isolated to one function. This
+  is the only place in the crate using `unsafe` (required by
+  `memmap2`'s `Mmap::map` contract).
+- `column/memory.rs` — `MemoryVfs` / `MemoryFile`, an in-memory backend
+  for tests: no filesystem involved, so callers can seed exact byte
+  layouts.
+- `column/parquet/` — a zero-dependency-on-Arrow Parquet reader
+  (footer/thrift parsing, page decoding, nested/repeated field
+  reconstruction, snappy/zstd decompression). Consumes raw bytes handed
+  to it by `column::vfs::Vfs`, doesn't call it directly.
 
-## Usage
+### Usage
 
 ```rust
-use db_storage::{PosixVfs, Vfs, VfsFile};
+use db_storage::{PosixVfs, Vfs, VfsFile, ParquetFile};
 
 let vfs = PosixVfs;
 let file = vfs.open(std::path::Path::new("data.parquet"))?;
 let mapped = file.mmap()?; // Deref's to &[u8]
+let parquet = ParquetFile::open(&mapped)?;
 ```
 
 Swap in `MemoryVfs` in tests to avoid touching disk:
@@ -46,10 +64,14 @@ vfs.insert("data.parquet", some_bytes);
 let file = vfs.open(std::path::Path::new("data.parquet"))?;
 ```
 
-## How engines use it
+## `row` (not yet migrated)
 
-- **column-rs** replaces its private `src/mmap.rs` with `db-storage`'s
-  `PosixVfs`, and hands the mapped bytes to its own `ParquetFile::open`.
-- **sqlite-rs** opens its page file through the same `Vfs` trait; a
-  future S3-backed or copy-on-write `Vfs` implementation plugs in without
-  either engine changing.
+sqlite-rs's storage stack (`sql-vfs`, `sql-pager`, `sql-header`,
+`sql-record`, plus new `sql-btree`/`sql-schema`) — tracked in
+[`#1`](https://github.com/t-rust-db/db-storage/issues/1), migration
+tracked in `db-core#39`.
+
+## `stream` (not yet started)
+
+Log-format storage — tracked in
+[`#3`](https://github.com/t-rust-db/db-storage/issues/3).

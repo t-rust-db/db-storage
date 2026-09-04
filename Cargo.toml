@@ -7,5 +7,10 @@ edition = "2021"
 name = "db_storage"
 path = "src/lib.rs"
 
+[features]
+default = ["column"]
+column = []
+
 [dependencies]
 memmap2 = "0.9.11"
+ruzstd = "0.7"
