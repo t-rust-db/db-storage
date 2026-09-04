@@ -18,6 +18,9 @@ pub use column::{
     Vfs, VfsFile,
 };
 
+#[cfg(feature = "row")]
+pub mod row;
+
 #[cfg(test)]
 mod tests {
     use super::*;

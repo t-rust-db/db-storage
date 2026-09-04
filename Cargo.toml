@@ -1,15 +1,21 @@
 [package]
 name = "db-storage"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 [lib]
 name = "db_storage"
 path = "src/lib.rs"
 
+[[bin]]
+name = "lock_probe"
+path = "src/row/vfs/bin/lock_probe.rs"
+required-features = ["row"]
+
 [features]
 default = ["column"]
 column = []
+row = []
 
 [dependencies]
 memmap2 = "0.9.11"
