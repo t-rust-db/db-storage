@@ -35,21 +35,40 @@ pub struct PosixFile {
 
 impl VfsFile for PosixFile {
     fn size(&self) -> io::Result<u64> {
-        self.file.lock().unwrap().metadata().map(|m| m.len())
+        self.file
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .metadata()
+            .map(|m| m.len())
     }
 
     fn read_at(&self, offset: u64, buf: &mut [u8]) -> io::Result<usize> {
-        let mut file = self.file.lock().unwrap();
+        let mut file = self
+            .file
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         file.seek(SeekFrom::Start(offset))?;
         file.read(buf)
     }
 
     fn mmap(&self) -> io::Result<MmapRegion> {
-        mmap::map_file(&self.file.lock().unwrap())
+        mmap::map_file(
+            &self
+                .file
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner),
+        )
     }
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::arithmetic_side_effects
+)]
 mod tests {
     use super::*;
     use std::io::Write;
@@ -73,7 +92,7 @@ mod tests {
             "db-storage-posix-test-missing-{}",
             std::process::id()
         ));
-        let _ = std::fs::remove_file(&path);
+        std::fs::remove_file(&path).ok();
         assert!(vfs.open(&path).is_err());
     }
 

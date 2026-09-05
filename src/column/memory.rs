@@ -24,7 +24,7 @@ impl MemoryVfs {
     pub fn insert(&self, path: impl Into<PathBuf>, contents: impl Into<Vec<u8>>) {
         self.files
             .lock()
-            .unwrap()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .insert(path.into(), contents.into().into());
     }
 }
@@ -36,7 +36,7 @@ impl Vfs for MemoryVfs {
         let contents = self
             .files
             .lock()
-            .unwrap()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
             .get(path)
             .cloned()
             .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, path.display().to_string()))?;
@@ -71,6 +71,13 @@ impl VfsFile for MemoryFile {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::arithmetic_side_effects
+)]
 mod tests {
     use super::*;
 

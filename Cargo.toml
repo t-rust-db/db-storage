@@ -23,3 +23,17 @@ test-support = []
 [dependencies]
 memmap2 = "0.9.11"
 ruzstd = "0.7"
+
+# sqlite-rs's lint bar, adopted crate-wide (#9; the row module is sqlite-rs's
+# storage stack and was written under exactly these). `mod_module_files` is
+# deliberately absent until #16 settles the module-layout convention.
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+let_underscore_must_use = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+panic = "deny"
+arithmetic_side_effects = "deny"
