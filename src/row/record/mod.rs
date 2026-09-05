@@ -19,19 +19,18 @@
 
 #![forbid(unsafe_code)]
 
-mod collation;
 mod decode;
 mod encode;
 mod error;
-mod value;
 mod varint;
 
-pub use collation::{compare_text, Collation};
+// The value model is db-core's (ADR 0010, t-rust-db/db-core#83): the b-tree
+// decodes straight into the type `db_core::vm::row` executes over.
+pub use db_core::value::{compare_text, Collation, TextEncoding, Value};
 pub use decode::{
     decode_column, decode_record, decode_record_only_into, decode_record_upto, decode_serial_value,
     parse_header_into, record_column_count,
 };
 pub use encode::{encode_record, encode_record_into, encode_varint};
 pub use error::RecordError;
-pub use value::{TextEncoding, Value};
 pub use varint::decode_varint;

@@ -21,76 +21,9 @@ use crate::row::record::Value;
 /// digits) that this module does not replicate — out of scope per
 /// issue #37, whose output-contract requirement is `-csv`/`-list`
 /// parity, not `.dump`'s SQL-literal precision.
-pub fn format_real(x: f64) -> String {
-    if x == 0.0 {
-        return if x.is_sign_negative() {
-            "-0.0".to_string()
-        } else {
-            "0.0".to_string()
-        };
-    }
-    // Not reachable from valid on-disk storage: SQLite's REAL serial
-    // types decode to a finite f64, never NaN. Guarded defensively rather
-    // than left to fall through into the exponent math below, which
-    // assumes a finite, non-zero value.
-    if x.is_nan() {
-        return "NULL".to_string();
-    }
-
-    let neg = x.is_sign_negative();
-    let ax = x.abs();
-    if ax.is_infinite() {
-        let mag = "9.0e+999"; // sqlite has no literal infinity display; unreachable via decoded storage
-        return if neg {
-            format!("-{mag}")
-        } else {
-            mag.to_string()
-        };
-    }
-
-    let sci = format!("{:.14e}", ax);
-    // Rust's `{:.14e}` formatter always emits an `e<exponent>` suffix with
-    // a valid integer exponent — these fallbacks are unreachable in
-    // practice, not real error handling.
-    let (mantissa, exp_str) = sci.split_once('e').unwrap_or((sci.as_str(), "0"));
-    let exp: i32 = exp_str.parse().unwrap_or(0);
-    // Rust's `{:.14e}` always yields exactly 1 + 14 = 15 significant digits.
-    let digits: String = mantissa.chars().filter(|c| *c != '.').collect();
-
-    let body = if !(-4..15).contains(&exp) {
-        let mantissa_trimmed = trim_trailing_zeros(&digits[1..]);
-        let mantissa_part = if mantissa_trimmed.is_empty() {
-            format!("{}.0", &digits[..1])
-        } else {
-            format!("{}.{}", &digits[..1], mantissa_trimmed)
-        };
-        let exp_sign = if exp >= 0 { "+" } else { "-" };
-        format!("{mantissa_part}e{exp_sign}{:02}", exp.abs())
-    } else if exp >= 0 {
-        let split = (exp as usize).saturating_add(1);
-        let int_part = &digits[..split];
-        let frac_part = trim_trailing_zeros(&digits[split..]);
-        if frac_part.is_empty() {
-            format!("{int_part}.0")
-        } else {
-            format!("{int_part}.{frac_part}")
-        }
-    } else {
-        let leading_zeros = "0".repeat((exp.unsigned_abs() as usize).saturating_sub(1));
-        let frac = trim_trailing_zeros(&digits);
-        format!("0.{leading_zeros}{frac}")
-    };
-
-    if neg {
-        format!("-{body}")
-    } else {
-        body
-    }
-}
-
-fn trim_trailing_zeros(s: &str) -> &str {
-    s.trim_end_matches('0')
-}
+// Identical to db-core's (ported from the same sqlite-rs source); one copy
+// (db-core ADR 0010).
+pub use db_core::value::format_real;
 
 /// Renders a blob the way `sqlite3`'s `quote()` does: `X'` + uppercase
 /// hex + `'`. Neither `-list` nor `-csv` mode has any other way to print

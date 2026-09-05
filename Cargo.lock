@@ -9,9 +9,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
+name = "db-core"
+version = "0.35.0"
+source = "git+https://github.com/t-rust-db/db-core?tag=v0.35.0#a3f9fb5a55f7027122861a60d9bd81baf09709ae"
+
+[[package]]
 name = "db-storage"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
+ "db-core",
  "memmap2",
  "ruzstd",
 ]

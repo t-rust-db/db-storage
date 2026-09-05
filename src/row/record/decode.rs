@@ -3,8 +3,8 @@
 use std::rc::Rc;
 
 use super::error::RecordError;
-use super::value::{TextEncoding, Value};
 use super::varint::decode_varint;
+use super::{TextEncoding, Value};
 
 /// Decodes a record (the payload of a table b-tree cell) into column
 /// values, per the record-format doc: varint header length, then one
