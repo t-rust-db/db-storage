@@ -1,6 +1,6 @@
 // Copyright 2026 Schuberg Philis
 // SPDX-License-Identifier: Apache-2.0
-use super::value::{TextEncoding, Value};
+use super::{TextEncoding, Value};
 
 /// Encodes a varint: the inverse of `decode_varint`. Mirrors the
 /// decoder's bit layout — big-endian, 7 bits per byte with a high-bit
