@@ -128,6 +128,8 @@ pub fn hold_multiple(path: &Path, specs: &[(&str, off_t, off_t)]) -> Vec<HeldLoc
         .collect()
 }
 
+/// Releases every lock in `held`, in order — the counterpart of
+/// [`hold_multiple`] for tests that set up several locks at once.
 pub fn release_all(held: Vec<HeldLock>) {
     for h in held {
         h.release();

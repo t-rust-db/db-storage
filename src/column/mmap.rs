@@ -7,6 +7,11 @@
 //! files larger than RAM without explicit seeking, and multiple readers
 //! can map the same file concurrently (the mapping is read-only).
 
+#![allow(
+    unsafe_code,
+    reason = "memmap2::Mmap::map is the one unsafe call in the column module; see the Safety comment at the call site"
+)]
+
 use std::fs::File;
 use std::io;
 

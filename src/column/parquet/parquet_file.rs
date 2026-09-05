@@ -225,7 +225,10 @@ impl<'a> ParquetFile<'a> {
 
     /// Lazily iterate over all row groups in file order.
     pub fn row_groups(&self) -> impl Iterator<Item = RowGroupReader<'a, '_>> {
-        (0..self.num_row_groups()).map(move |i| self.row_group(i).expect("index within range"))
+        // `row_group(i)` can only fail for an out-of-range index, which the
+        // range excludes; `flat_map` over the `Result` keeps that without an
+        // `expect`.
+        (0..self.num_row_groups()).flat_map(move |i| self.row_group(i))
     }
 
     /// Max definition level for a leaf column, derived from its schema
@@ -733,6 +736,13 @@ fn int96_to_epoch_micros(v: reader::Int96) -> i64 {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::arithmetic_side_effects
+)]
 mod tests {
     use super::*;
 

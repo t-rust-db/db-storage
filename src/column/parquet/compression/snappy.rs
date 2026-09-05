@@ -113,8 +113,11 @@ pub fn decompress(data: &[u8], uncompressed_size: usize) -> Result<Vec<u8>> {
             _ => {
                 // Copy with 4-byte little-endian offset (tag & 0x03 == 3).
                 let len = (tag >> 2) as usize + 1;
-                let bytes = data.get(pos..pos + 4).ok_or(SnappyError::UnexpectedEof)?;
-                let offset = u32::from_le_bytes(bytes.try_into().unwrap()) as usize;
+                let bytes: [u8; 4] = data
+                    .get(pos..pos + 4)
+                    .and_then(|b| b.try_into().ok())
+                    .ok_or(SnappyError::UnexpectedEof)?;
+                let offset = u32::from_le_bytes(bytes) as usize;
                 pos += 4;
                 copy_from_offset(&mut out, offset, len)?;
             }
@@ -147,6 +150,13 @@ fn copy_from_offset(out: &mut Vec<u8>, offset: usize, len: usize) -> Result<()> 
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::arithmetic_side_effects
+)]
 mod tests {
     use super::*;
 

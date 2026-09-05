@@ -292,6 +292,13 @@ pub fn decode_struct(buf: &[u8]) -> Result<(Vec<(i16, Value)>, usize)> {
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::arithmetic_side_effects
+)]
 mod tests {
     use super::*;
 

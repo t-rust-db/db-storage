@@ -9,6 +9,12 @@
 //! contract and cannot be avoided without hand-rolling a cross-platform
 //! mmap wrapper. Everything else in this crate is safe code.
 
+// Zero `unsafe` outside two audited carve-outs: the vendored fcntl FFI
+// (`row::vfs::fcntl`) and the memmap2 call (`column::mmap`). `deny` rather
+// than `forbid` is what lets those two opt back in locally (#9).
+#![deny(unsafe_code)]
+#![warn(missing_docs)]
+
 #[cfg(feature = "column")]
 pub mod column;
 
@@ -22,6 +28,13 @@ pub use column::{
 pub mod row;
 
 #[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::arithmetic_side_effects
+)]
 mod tests {
     use super::*;
     use std::io::Write;
@@ -88,7 +101,7 @@ mod tests {
 
     impl Drop for TempFile {
         fn drop(&mut self) {
-            let _ = std::fs::remove_file(&self.path);
+            std::fs::remove_file(&self.path).ok();
         }
     }
 

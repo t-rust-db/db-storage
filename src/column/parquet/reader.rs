@@ -167,6 +167,14 @@ fn assemble<T>(
     Ok(out)
 }
 
+/// Like [`take`], but for a fixed-width field: returns the bytes as an
+/// array so the `from_le_bytes` callers need no fallible conversion.
+fn take_array<const N: usize>(buf: &mut &[u8]) -> Result<[u8; N]> {
+    take(buf, N)?
+        .try_into()
+        .map_err(|_| ReadError::UnexpectedEof)
+}
+
 fn take<'a>(buf: &mut &'a [u8], n: usize) -> Result<&'a [u8]> {
     if buf.len() < n {
         return Err(ReadError::UnexpectedEof);
@@ -177,30 +185,25 @@ fn take<'a>(buf: &mut &'a [u8], n: usize) -> Result<&'a [u8]> {
 }
 
 fn read_plain_i64(buf: &mut &[u8]) -> Result<i64> {
-    let bytes = take(buf, 8)?;
-    Ok(i64::from_le_bytes(bytes.try_into().unwrap()))
+    Ok(i64::from_le_bytes(take_array(buf)?))
 }
 
 fn read_plain_f64(buf: &mut &[u8]) -> Result<f64> {
-    let bytes = take(buf, 8)?;
-    Ok(f64::from_le_bytes(bytes.try_into().unwrap()))
+    Ok(f64::from_le_bytes(take_array(buf)?))
 }
 
 fn read_plain_string(buf: &mut &[u8]) -> Result<String> {
-    let len_bytes = take(buf, 4)?;
-    let len = u32::from_le_bytes(len_bytes.try_into().unwrap()) as usize;
+    let len = u32::from_le_bytes(take_array(buf)?) as usize;
     let bytes = take(buf, len)?;
     String::from_utf8(bytes.to_vec()).map_err(|_| ReadError::InvalidUtf8)
 }
 
 fn read_plain_i32(buf: &mut &[u8]) -> Result<i32> {
-    let bytes = take(buf, 4)?;
-    Ok(i32::from_le_bytes(bytes.try_into().unwrap()))
+    Ok(i32::from_le_bytes(take_array(buf)?))
 }
 
 fn read_plain_f32(buf: &mut &[u8]) -> Result<f32> {
-    let bytes = take(buf, 4)?;
-    Ok(f32::from_le_bytes(bytes.try_into().unwrap()))
+    Ok(f32::from_le_bytes(take_array(buf)?))
 }
 
 fn read_plain_fixed_len_byte_array(buf: &mut &[u8], len: usize) -> Result<Vec<u8>> {
@@ -216,9 +219,8 @@ pub struct Int96 {
 }
 
 fn read_plain_int96(buf: &mut &[u8]) -> Result<Int96> {
-    let bytes = take(buf, 12)?;
-    let time_nanos = i64::from_le_bytes(bytes[0..8].try_into().unwrap());
-    let julian_day = i32::from_le_bytes(bytes[8..12].try_into().unwrap());
+    let time_nanos = i64::from_le_bytes(take_array(buf)?);
+    let julian_day = i32::from_le_bytes(take_array(buf)?);
     Ok(Int96 {
         julian_day,
         time_nanos,
@@ -658,6 +660,13 @@ pub fn read_int96_column_dictionary(
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::panic,
+    clippy::arithmetic_side_effects
+)]
 mod tests {
     use super::*;
     use crate::column::parquet::page::Encoding;
