@@ -1724,9 +1724,11 @@ fn decode_cell_head(
 /// `DatabaseHeader::parse` and `Pager::open` to accept it. Shared by the
 /// `#[cfg(test)]` modules of `delete.rs`, `schema.rs`, `insert.rs` and
 /// `master.rs`, which all built this same fixture independently before.
-#[cfg(test)]
+/// Also exported under the `test-support` feature for consumers' test
+/// suites (sqlite-rs's `src/planner.rs` tests, #13).
+#[cfg(any(test, feature = "test-support"))]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
-pub(crate) fn test_minimal_db(
+pub fn test_minimal_db(
     page_size: u32,
 ) -> (
     crate::row::vfs::MemoryVfs,

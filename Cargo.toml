@@ -1,6 +1,6 @@
 [package]
 name = "db-storage"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 
 [lib]
@@ -16,6 +16,9 @@ required-features = ["row"]
 default = ["column"]
 column = []
 row = []
+# Test-support helpers (e.g. `row::btree::test_minimal_db`) for consumers'
+# own test suites — enable from `[dev-dependencies]` only (#13).
+test-support = []
 
 [dependencies]
 memmap2 = "0.9.11"
