@@ -558,11 +558,12 @@ impl Pager {
 
     /// The lock level escalated to by `begin_immediate`/`begin_exclusive`
     /// for the current transaction, or `Shared` if neither has run since
-    /// the last commit/rollback (or since `open`). Test-only: nothing in
-    /// `src/` reads this — `flush`/`rollback` consult `self.tx_lock_level`
-    /// directly — but `src/vdbe/control.rs`'s tests assert on it to
-    /// verify `BEGIN IMMEDIATE`/`EXCLUSIVE` escalate correctly (#395).
-    #[cfg(test)]
+    /// the last commit/rollback (or since `open`). Nothing in this crate
+    /// reads it — `flush`/`rollback` consult `self.tx_lock_level` directly
+    /// — but consumers' tests do: sqlite-rs's `src/vdbe/control.rs` asserts
+    /// on it to verify `BEGIN IMMEDIATE`/`EXCLUSIVE` escalate correctly
+    /// (Lab271 #395), which is why it is a plain `pub` accessor rather than
+    /// `#[cfg(test)]` (#13).
     pub fn tx_lock_level(&self) -> crate::row::vfs::LockLevel {
         self.tx_lock_level
     }
